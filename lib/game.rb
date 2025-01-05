@@ -22,12 +22,10 @@ class Chess
 
   # draws the entire board, including the row/col headers
   def chessboard
-    # Loop to create 8 rows of chessboard
     alph = %w[A B C D E F G H]
-    8.times { |i| print i != 0 ? " #{i} " : "   #{i} " }
-    puts
+    puts "   #{alph.join('  ')}"
     8.times do |row|
-      print "#{alph[row]} "
+      print "#{row} "
       8.times { |col| print draw_tile(row, col) }
       puts
     end
