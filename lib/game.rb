@@ -1,7 +1,6 @@
 # requires files
 folder = '/home/zach/ODIN/chess/lib/pieces'
-files = Dir.entries(folder).reject { |f| ['.', '..'].include?(f) }
-files.each { |file| require_relative "./pieces/#{file}" }
+Dir.entries(folder).each { |file| require_relative "./pieces/#{file}" unless file[0] == '.' }
 require_relative 'data'
 
 # Chess
