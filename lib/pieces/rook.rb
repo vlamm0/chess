@@ -1,8 +1,11 @@
+require_relative 'piece'
+
 # Rook
-class Rook
-  attr_accessor :sym
+class Rook < Piece
+  attr_accessor :sym, :dir, :color, :moved
 
   def initialize(col = 1)
+    super
     @sym = col == 1 ? "\u2656" : "\u265C"
   end
 end
