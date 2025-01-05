@@ -2,9 +2,9 @@
 class Piece
   attr_accessor :dir, :color, :moved
 
-  def initialize(col = 1)
-    @color = col == 1 ? 'white' : 'black'
+  def initialize(color)
+    @color = color
+    @dir = color == 'white' ? 1 : -1
     @moved = false
-    @dir = @color == 'white' ? 1 : -1
   end
 end

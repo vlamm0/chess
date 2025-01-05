@@ -4,8 +4,8 @@ require_relative 'piece'
 class Rook < Piece
   attr_accessor :sym, :dir, :color, :moved
 
-  def initialize(col = 1)
+  def initialize(color)
     super
-    @sym = col == 1 ? "\u2656" : "\u265C"
+    @sym = color == 'white' ? "\u2656" : "\u265C"
   end
 end

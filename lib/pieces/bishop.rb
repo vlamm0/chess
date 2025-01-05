@@ -6,6 +6,6 @@ class Bishop < Piece
 
   def initialize(col = 1)
     super
-    @sym = col == 1 ? "\u2657" : "\u265D"
+    @sym = color == 'white' ? "\u2657" : "\u265D"
   end
 end

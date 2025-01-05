@@ -4,8 +4,8 @@ require_relative 'piece'
 class Knight < Piece
   attr_accessor :sym, :dir, :color, :moved
 
-  def initialize(col = 1)
+  def initialize(color)
     super
-    @sym = col == 1 ? "\u2658" : "\u265E"
+    @sym = color == 'white' ? "\u2658" : "\u265E"
   end
 end

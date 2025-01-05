@@ -4,8 +4,8 @@ require_relative 'piece'
 class Queen < Piece
   attr_accessor :sym, :dir, :color, :moved
 
-  def initialize(col = 1)
+  def initialize(color)
     super
-    @sym = col == 1 ? "\u2654" : "\u265A"
+    @sym = color == 'white' ? "\u2654" : "\u265A"
   end
 end
