@@ -29,7 +29,15 @@ class Chess
       puts
     end
   end
+
+  # moves piece
+  def move(curr, to)
+    data[to[0]][to[1]] = data[curr[0]][curr[1]]
+    data[curr[0]][curr[1]] = ''
+  end
 end
 
 game = Chess.new
+game.chessboard
+game.move([1, 0], [3, 0])
 game.chessboard
