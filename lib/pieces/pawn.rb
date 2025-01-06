@@ -10,7 +10,9 @@ class Pawn < Piece
     # maybe put each pieces pos here?
   end
 
-  def move
-    [1, 0]
+  def moves
+    possible_moves = [[@dir, 0]]
+    possible_moves.append([@dir * 2, 0]) unless moved
+    possible_moves
   end
 end
