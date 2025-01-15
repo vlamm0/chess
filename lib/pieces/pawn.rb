@@ -7,12 +7,16 @@ class Pawn < Piece
   def initialize(color)
     super
     @sym = color == 'white' ? "\u2659" : "\u265F"
-    # maybe put each pieces pos here?
+    @dir = color == 'white' ? -1 : 1
   end
 
-  def moves
-    possible_moves = [[@dir, 0]]
-    possible_moves.append([@dir * 2, 0]) unless moved
-    possible_moves
+  def moves(row, col)
+    possible_moves = [[row + @dir, col + 0]]
+    possible_moves.append([row + (@dir * 2), col + 0]) unless moved
+    possible_moves.filter { |move| on_board?(move) }
+  end
+
+  def attacks(row, col)
+    [[row + @dir, col - 1], [row + @dir, col + 1]].filter { |move| on_board?(move) }
   end
 end

@@ -4,7 +4,10 @@ class Piece
 
   def initialize(color)
     @color = color
-    @dir = color == 'white' ? -1 : 1
     @moved = false
+  end
+
+  def on_board?(move)
+    move[0].between?(0, 7) && move[1].between?(0, 7)
   end
 end
