@@ -6,6 +6,11 @@ require_relative 'data'
 # Chess
 class Chess
   ALPH = %w[A B C D E F G H].freeze
+  GREEN = "\e[48;5;10m".freeze
+  YELLOW = "\e[48;5;11m".freeze
+  RED = "\e[48;5;9m".freeze
+  WHITE = "\e[48;5;255m".freeze
+  GRAY = "\e[48;5;244m".freeze
   attr_accessor :data
 
   # uses the required data file for state, start or saved (to be implemented!)
@@ -25,44 +30,25 @@ class Chess
 
   # draws each chess tile using the index in the 2d arr of chess data
   def draw_tile(row, col, highlights, selection, piece = data[row][col])
+    # colors the selected piece green
+    return "#{GREEN} \e[38;5;0m#{piece.sym} \e[0m" if selection == [row, col]
+
     # Determine what exists in the tile: piece or empty
     tile = piece == '' ? "\s\s\s" : " \e[38;5;0m#{piece.sym} \e[0m"
 
-    # colors the selected piece green, technically this can go first as it will never be blank
-    return "\e[48;5;10m#{tile}" if selection == [row, col]
-
-    # highlights valid moves yellow and valid captures red
-    if highlights&.include?([row, col])
-      highlight_tile(selection, row, col, tile)
-    else
-      background_tile(row, col, tile)
-    end
+    coloring = highlights&.include?([row, col]) ? hl_tile(selection, row, col) : bg_tile(row, col)
+    "#{coloring}#{tile}\e[0m"
   end
 
   # needs to handle pawn functioning
-  def highlight_tile(selection, row, col, tile)
-    selected_piece = data[selection[0]][selection[1]]
-    curr_piece = data[row][col]
+  def hl_tile(selection, row, col, selected_piece = data[selection[0]][selection[1]])
+    # return YELLOW if selected_piece.is_a?(Pawn) && selection[1] == col
 
-    # handle pawn method
-    return handle_pawn(selection, row, col, tile) if selected_piece.is_a?(Pawn)
-
-    move_color = curr_piece == '' ? 11 : 9
-    "\e[48;5;#{move_color}m#{tile}\e[0m" # fixed the expanding color
+    data[row][col] == '' ? YELLOW : RED
   end
 
-  def background_tile(row, col, tile)
-    bg_color = (row + col).even? ? 255 : 244
-    "\e[48;5;#{bg_color}m#{tile}\e[0m"
-  end
-
-  def handle_pawn(selection, row, col, tile)
-    selected_piece = data[selection[0]][selection[1]]
-    curr_piece = data[row][col]
-    # pawn diagnol attack
-    return "\e[48;5;9m#{tile}" if selection[1] != col && curr_piece.color != selected_piece.color
-
-    curr_piece == '' ? "\e[48;5;11m#{tile}" : background_tile(row, col, tile)
+  def bg_tile(row, col)
+    (row + col).even? ? WHITE : GRAY
   end
 
   # moves piece
@@ -78,16 +64,30 @@ class Chess
 
   # shows available moves for selected piece
   def select(row, col, piece = data[row][col])
-    if piece.is_a?(Pawn)
-      # possible_moves = piece.moves(row, col)
-      # possible_moves.concat(piece.attacks(row, col).select { |atk| data[atk[0]][atk[1]].is_a?(Piece) })
-      possible_moves =
-        piece.moves(row, col) + piece.attacks(row, col).select { |atk| data[atk[0]][atk[1]].is_a?(Piece) }
-    else
-      possible_moves = piece.moves.map { |proc| dfs([row, col], piece.color, proc) }.flatten(1)
-    end
+    # handle_pieces
+    # --handle_#{piece}
+    puts piece.class
+    possible_moves = if piece.is_a?(Pawn)
+                       handle_pawn(row, col)
+                     else
+                       piece.moves.map { |proc| dfs([row, col], piece.color, proc) }.flatten(1)
+                     end
+    # pp possible_moves
+    possible_moves&.filter! { |move| !same_team?(piece.color, data[move[0]][move[1]]) }
     pp possible_moves
     chessboard(possible_moves, [row, col])
+  end
+
+  def handle_pawn(row, col, piece = data[row][col])
+    forward = row + piece.dir
+    blocks = piece.blocked?.call(data[forward][col], data[forward + piece.dir][col])
+    piece.moves(row, col, blocks) + pawn_attacks(forward, col)
+  end
+
+  def pawn_attacks(forward, col, atks = [])
+    atks << [forward, col - 1] if data[forward][col - 1] != ''
+    atks << [forward, col + 1] if data[forward][col + 1] != ''
+    atks
   end
 
   def alph_to_num(letter)
@@ -103,7 +103,6 @@ class Chess
     # base
     pos = proc.call(pos)
     return acc unless on_board?(pos)
-    return acc if same_team?(color, data[pos[0]][pos[1]])
 
     acc.append(pos)
     # pp acc if data[pos[0]][pos[1]] != ''
@@ -151,3 +150,9 @@ game.select(5, 5)
 # queen test
 game.move([0, game.alph_to_num('e')], [5, 5])
 game.select(5, 5)
+
+# pawn test
+game.move([6, game.alph_to_num('a')], [2, 1])
+# game.move([1, game.alph_to_num('c')], [2, 2])
+game.move([6, game.alph_to_num('c')], [2, 0])
+game.select(1, 1)
