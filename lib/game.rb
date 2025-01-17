@@ -65,7 +65,7 @@ class Chess
   def select(row, col, piece = data[row][col])
     puts "\n\n#{piece.class}"
     possible_moves =
-      piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_sliders(row, col, piece)
+      piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_pieces(row, col, piece)
     # possible_moves = handle_pieces(row, col, piece)
     # pp possible_moves
     possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
@@ -89,14 +89,6 @@ class Chess
     atks
   end
 
-  def handle_sliders(row, col, piece)
-    piece.moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
-  end
-
-  def handle_knight(row, col, piece)
-    piece.moves(row, col).filter { |move| on_board?(move) }
-  end
-
   def alph_to_num(letter)
     ALPH.index(letter.upcase!)
   end
@@ -116,7 +108,7 @@ class Chess
     return acc if same_team?(piece.color, curr)
 
     acc.append(pos) # only sends back next pos when onboard and not on the same team
-    return acc if curr != '' || piece.is_a?(Gallop)
+    return acc if curr != '' || piece.is_a?(Gallop) || piece.is_a?(Pawn)
 
     # recurse
     # pp 'made it?'
