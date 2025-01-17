@@ -20,7 +20,7 @@ class Chess
 
   # draws the entire board, including the row/col headers
   def chessboard(highlights = nil, selection = nil)
-    puts "   #{ALPH.join('  ')}"
+    puts "\n   #{ALPH.join('  ')}"
     8.times do |row|
       print "#{row} "
       8.times { |col| print draw_tile(row, col, highlights, selection) }
@@ -63,22 +63,18 @@ class Chess
 
   # shows available moves for selected piece
   def select(row, col, piece = data[row][col])
-    puts piece.class
-    possible_moves = handle_pieces(row, col, piece)
+    puts "\n\n#{piece.class}"
+    possible_moves =
+      piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_sliders(row, col, piece)
+    # possible_moves = handle_pieces(row, col, piece)
     # pp possible_moves
-
-    possible_moves&.filter! { |move| !same_team?(piece.color, data[move[0]][move[1]]) }
-    possible_moves.each { |move| print "#{move[0]}#{ALPH[move[1]]} " }
+    possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
     puts
     chessboard(possible_moves, [row, col])
   end
 
   def handle_pieces(row, col, piece)
-    case piece
-    when Pawn then handle_pawn(row, col, piece)
-    when Knight then handle_knight(row, col, piece)
-    else handle_sliders(row, col, piece)
-    end
+    piece.moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
   end
 
   def handle_pawn(row, col, piece)
@@ -94,7 +90,7 @@ class Chess
   end
 
   def handle_sliders(row, col, piece)
-    piece.moves.map { |proc| dfs([row, col], piece.color, proc) }.flatten(1)
+    piece.moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
   end
 
   def handle_knight(row, col, piece)
@@ -111,18 +107,20 @@ class Chess
 
   # finds available moves for sliding pieces
   # color is not needed and piece could be easier
-  def dfs(pos, color, proc, acc = [])
+  def dfs(pos, piece, proc, acc = [])
     # base
-    pos = proc.call(pos)
+    pos = proc.call(pos) # next proc
     return acc unless on_board?(pos)
 
-    acc.append(pos)
-    # pp acc if data[pos[0]][pos[1]] != ''
-    return acc if data[pos[0]][pos[1]] != '' # same_team? or is a knight/king?
+    curr = data[pos[0]][pos[1]] # need variable for abc
+    return acc if same_team?(piece.color, curr)
+
+    acc.append(pos) # only sends back next pos when onboard and not on the same team
+    return acc if curr != '' || piece.is_a?(Gallop)
 
     # recurse
     # pp 'made it?'
-    dfs(pos, color, proc, acc)
+    dfs(pos, piece, proc, acc)
   end
 
   def same_team?(color, piece)
@@ -172,3 +170,7 @@ game.select(1, 1)
 # knight test
 game.select(7, 6)
 # game.data[7][6].moves(7, 6)
+
+# king test
+game.move([5, game.alph_to_num('f')], [6, game.alph_to_num('e')])
+game.select(7, 4)

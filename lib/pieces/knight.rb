@@ -10,7 +10,7 @@ class Knight < Piece
     @sym = color == 'white' ? "\u2658" : "\u265E"
   end
 
-  def moves(row, col)
-    travails(row, col)
+  def moves
+    travails
   end
 end

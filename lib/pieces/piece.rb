@@ -42,7 +42,8 @@ end
 # moveset for knight
 module Gallop
   MOVES = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]].freeze
-  def travails(row, col)
-    MOVES.map { |move| [move[0] + row, move[1] + col] }
+  def travails
+    # MOVES.map { |move| [move[0] + row, move[1] + col] }
+    MOVES.map { |move| proc { |pos| [move[0] + pos[0], move[1] + pos[1]] } }
   end
 end
