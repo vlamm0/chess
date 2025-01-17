@@ -36,14 +36,13 @@ class Chess
     # Determine what exists in the tile: piece or empty
     tile = piece == '' ? "\s\s\s" : " \e[38;5;0m#{piece.sym} \e[0m"
 
-    coloring = highlights&.include?([row, col]) ? hl_tile(selection, row, col) : bg_tile(row, col)
-    "#{coloring}#{tile}\e[0m"
+    # Determine RED, YELLOW, or standard
+    color = highlights&.include?([row, col]) ? hl_tile(row, col) : bg_tile(row, col)
+    "#{color}#{tile}\e[0m"
   end
 
   # needs to handle pawn functioning
-  def hl_tile(selection, row, col, selected_piece = data[selection[0]][selection[1]])
-    # return YELLOW if selected_piece.is_a?(Pawn) && selection[1] == col
-
+  def hl_tile(row, col)
     data[row][col] == '' ? YELLOW : RED
   end
 
@@ -64,21 +63,25 @@ class Chess
 
   # shows available moves for selected piece
   def select(row, col, piece = data[row][col])
-    # handle_pieces
-    # --handle_#{piece}
     puts piece.class
-    possible_moves = if piece.is_a?(Pawn)
-                       handle_pawn(row, col)
-                     else
-                       piece.moves.map { |proc| dfs([row, col], piece.color, proc) }.flatten(1)
-                     end
+    possible_moves = handle_pieces(row, col, piece)
     # pp possible_moves
+
     possible_moves&.filter! { |move| !same_team?(piece.color, data[move[0]][move[1]]) }
-    pp possible_moves
+    possible_moves.each { |move| print "#{move[0]}#{ALPH[move[1]]} " }
+    puts
     chessboard(possible_moves, [row, col])
   end
 
-  def handle_pawn(row, col, piece = data[row][col])
+  def handle_pieces(row, col, piece)
+    case piece
+    when Pawn then handle_pawn(row, col, piece)
+    when Knight then handle_knight(row, col, piece)
+    else handle_sliders(row, col, piece)
+    end
+  end
+
+  def handle_pawn(row, col, piece)
     forward = row + piece.dir
     blocks = piece.blocked?.call(data[forward][col], data[forward + piece.dir][col])
     piece.moves(row, col, blocks) + pawn_attacks(forward, col)
@@ -90,6 +93,14 @@ class Chess
     atks
   end
 
+  def handle_sliders(row, col, piece)
+    piece.moves.map { |proc| dfs([row, col], piece.color, proc) }.flatten(1)
+  end
+
+  def handle_knight(row, col, piece)
+    piece.moves(row, col).filter { |move| on_board?(move) }
+  end
+
   def alph_to_num(letter)
     ALPH.index(letter.upcase!)
   end
@@ -99,6 +110,7 @@ class Chess
   end
 
   # finds available moves for sliding pieces
+  # color is not needed and piece could be easier
   def dfs(pos, color, proc, acc = [])
     # base
     pos = proc.call(pos)
@@ -106,7 +118,7 @@ class Chess
 
     acc.append(pos)
     # pp acc if data[pos[0]][pos[1]] != ''
-    return acc if data[pos[0]][pos[1]] != ''
+    return acc if data[pos[0]][pos[1]] != '' # same_team? or is a knight/king?
 
     # recurse
     # pp 'made it?'
@@ -156,3 +168,7 @@ game.move([6, game.alph_to_num('a')], [2, 1])
 # game.move([1, game.alph_to_num('c')], [2, 2])
 game.move([6, game.alph_to_num('c')], [2, 0])
 game.select(1, 1)
+
+# knight test
+game.select(7, 6)
+# game.data[7][6].moves(7, 6)

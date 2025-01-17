@@ -38,3 +38,11 @@ module Directions
     [proc_diag, proc_diag_neg]
   end
 end
+
+# moveset for knight
+module Gallop
+  MOVES = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]].freeze
+  def travails(row, col)
+    MOVES.map { |move| [move[0] + row, move[1] + col] }
+  end
+end
