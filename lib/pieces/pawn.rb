@@ -10,18 +10,42 @@ class Pawn < Piece
     @dir = color == 'white' ? -1 : 1
   end
 
-  def moves(row, col, blocked)
-    possible_moves = []
-    possible_moves.append([row + @dir, col]) unless blocked[0]
-    possible_moves.append([row + (@dir * 2), col]) unless moved || blocked[0] || blocked[1]
-    possible_moves # .filter { |move| on_board?(move) }
+  def moves(bools, available_moves = [])
+    # pp bools
+    procs = [spacex1, spacex2, left_atk, right_atk].flatten
+    bools.each_with_index do |bool, i|
+      available_moves.append(procs[i]) if bool
+    end
+    available_moves
+    # .reject { |proc, i| i == bools[i] }
   end
 
-  def attacks(row, col)
-    [[row + @dir, col - 1], [row + @dir, col + 1]]
+  #
+  def spacex1
+    proc { |pos| [@dir + pos[0], pos[1]] }
   end
 
-  def blocked?
+  def spacex2
+    proc { |pos|
+      # have to call prev
+      moved ? nil : [@dir + @dir + pos[0], pos[1]]
+    }
+  end
+
+  def left_atk
+    proc { |pos| atks(pos[0], pos[1])[0] }
+  end
+
+  def right_atk
+    proc { |pos| atks(pos[0], pos[1])[1] }
+  end
+
+  # unlessed !blocked
+  def atks(row, col)
+    [[@dir + row, col - 1], [@dir + row, col + 1]]
+  end
+
+  def blocked?(bools)
     proc do |ahead1, ahead2|
       [ahead1 != '', ahead2 != '']
     end

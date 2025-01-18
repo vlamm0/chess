@@ -34,7 +34,7 @@ class Chess
     return "#{GREEN} \e[38;5;0m#{piece.sym} \e[0m" if selection == [row, col]
 
     # Determine what exists in the tile: piece or empty
-    tile = piece == '' ? "\s\s\s" : " \e[38;5;0m#{piece.sym} \e[0m"
+    tile = piece.nil? ? "\s\s\s" : " \e[38;5;0m#{piece.sym} \e[0m"
 
     # Determine RED, YELLOW, or standard
     color = highlights&.include?([row, col]) ? hl_tile(row, col) : bg_tile(row, col)
@@ -43,7 +43,7 @@ class Chess
 
   # needs to handle pawn functioning
   def hl_tile(row, col)
-    data[row][col] == '' ? YELLOW : RED
+    data[row][col].nil? ? YELLOW : RED
   end
 
   def bg_tile(row, col)
@@ -57,15 +57,15 @@ class Chess
     toy, tox = to
     # swap
     data[toy][tox] = data[curry][currx]
-    data[curry][currx] = ''
+    data[curry][currx] = nil
     data[toy][tox].moved = true
   end
 
   # shows available moves for selected piece
   def select(row, col, piece = data[row][col])
     puts "\n\n#{piece.class}"
-    possible_moves =
-      piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_pieces(row, col, piece)
+    possible_moves = handle_pieces(row, col, piece)
+    # piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_pieces(row, col, piece)
     # possible_moves = handle_pieces(row, col, piece)
     # pp possible_moves
     possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
@@ -73,20 +73,35 @@ class Chess
     chessboard(possible_moves, [row, col])
   end
 
-  def handle_pieces(row, col, piece)
-    piece.moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
+  def handle_pieces(row, col, piece) # dfs unless piece.is_a?(Pawn) &&
+    moves = if piece.is_a?(Pawn)
+              pp pawn_blocks(row, col, piece)
+              piece.moves(pawn_blocks(row, col, piece))
+              # filter if blocked, we need 4 tiles of data
+              # piece.moves.filter { |proc| proc.call([row, col], data).nil? }
+            else
+              piece.moves
+            end
+    moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
   end
 
-  def handle_pawn(row, col, piece)
-    forward = row + piece.dir
-    blocks = piece.blocked?.call(data[forward][col], data[forward + piece.dir][col])
-    piece.moves(row, col, blocks) + pawn_attacks(forward, col)
+  def blocks_4_pawns(row, col, piece = data[row][col], forward = piece.dir)
+    [data[row + forward][col - 1], data[row + forward][col], data[row + forward + forward][col]]
   end
 
-  def pawn_attacks(forward, col, atks = [])
-    atks << [forward, col - 1] if data[forward][col - 1] != ''
-    atks << [forward, col + 1] if data[forward][col + 1] != ''
-    atks
+  def pawn_blocks(row, col, piece, forward = row + piece.dir)
+    # forward = row + piece.dir?
+    space = data[forward][col].nil?
+    blocks = [space, space && data[forward + piece.dir][col].nil?] # piece.blocked?.call(data[forward][col], data[forward + piece.dir][col])
+    # pp blocks
+    # pp(blocks + pawn_attacks(row, col, piece))
+    pp pawn_attacks(row, col, piece)
+    blocks + pawn_attacks(row, col, piece)
+    # piece.blocked?(blocks + pawn_attacks(row, col, piece))
+  end
+
+  def pawn_attacks(row, col, piece)
+    piece.atks(row, col).map { |atk| !data[atk[0]][atk[1]].nil? }
   end
 
   def alph_to_num(letter)
@@ -94,6 +109,8 @@ class Chess
   end
 
   def on_board?(move)
+    return false if move.nil?
+
     move[0].between?(0, 7) && move[1].between?(0, 7)
   end
 
@@ -108,7 +125,7 @@ class Chess
     return acc if same_team?(piece.color, curr)
 
     acc.append(pos) # only sends back next pos when onboard and not on the same team
-    return acc if curr != '' || piece.is_a?(Gallop) || piece.is_a?(Pawn)
+    return acc if !curr.nil? || piece.is_a?(Gallop) || piece.is_a?(Pawn)
 
     # recurse
     # pp 'made it?'
@@ -116,7 +133,7 @@ class Chess
   end
 
   def same_team?(color, piece)
-    return false if piece == ''
+    return false if piece.nil?
 
     color == piece.color
   end
@@ -128,7 +145,7 @@ class Chess
     piece = [piece_x, piece_y]
     y = piece.find { |axis| axis.is_a?(Integer) }
     x = alph_to_num(piece.find { |axis| axis.is_a?(String) })
-    move_x.nil? && move_y.nil? ? data[y][x] = '' : move([y, x], [move_y, move_x])
+    move_x.nil? && move_y.nil? ? data[y][x] = nil : move([y, x], [move_y, move_x])
   end
 end
 
@@ -142,12 +159,12 @@ game.change_data('g', 6)
 # game.select(0, 0)
 
 # bishop test
-game.move([7, game.alph_to_num('f')], [5, 5])
-game.select(5, 5)
+# game.move([7, game.alph_to_num('f')], [5, 5])
+# game.select(5, 5)
 
 # rook test
-game.move([0, game.alph_to_num('a')], [5, 5])
-game.select(5, 5)
+# game.move([0, game.alph_to_num('a')], [5, 5])
+# game.select(5, 5)
 
 # queen test
 game.move([0, game.alph_to_num('e')], [5, 5])
@@ -155,14 +172,14 @@ game.select(5, 5)
 
 # pawn test
 game.move([6, game.alph_to_num('a')], [2, 1])
-# game.move([1, game.alph_to_num('c')], [2, 2])
+game.move([1, game.alph_to_num('c')], [2, 2])
 game.move([6, game.alph_to_num('c')], [2, 0])
 game.select(1, 1)
 
 # knight test
-game.select(7, 6)
+# game.select(7, 6)
 # game.data[7][6].moves(7, 6)
 
 # king test
-game.move([5, game.alph_to_num('f')], [6, game.alph_to_num('e')])
-game.select(7, 4)
+# game.move([5, game.alph_to_num('f')], [6, game.alph_to_num('e')])
+# game.select(7, 4)

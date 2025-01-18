@@ -1,6 +1,6 @@
 # Data
 module MyData
-  @data = Array.new(8) { Array.new(8, '') }
+  @data = Array.new(8) { Array.new(8, nil) }
 
   # Set up the black pieces
   @data[0][0] = Rook.new('black')
@@ -15,7 +15,7 @@ module MyData
   # Set up the black pawns
   8.times { |i| @data[1][i] = Pawn.new('black') }
 
-  4.times { |i| @data[i + 2] = Array.new(8, '') }
+  4.times { |i| @data[i + 2] = Array.new(8, nil) }
 
   # Set up the white pieces
   @data[7][0] = Rook.new('white')
