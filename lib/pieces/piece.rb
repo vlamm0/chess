@@ -37,13 +37,38 @@ module Directions
     proc_diag_neg = proc { |pos| [pos[0] - 1, pos[1] + 1] }
     [proc_diag, proc_diag_neg]
   end
+
+  def directions
+    [hor, vert, diag1, diag2].flatten!
+  end
+
+  def sliding?(proc)
+    pp proc
+    pp directions
+    directions.any? { |dir| dir == proc }
+  end
 end
 
 # moveset for knight
 module Gallop
   MOVES = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]].freeze
   def travails
-    # MOVES.map { |move| [move[0] + row, move[1] + col] }
     MOVES.map { |move| proc { |pos| [move[0] + pos[0], move[1] + pos[1]] } }
+  end
+end
+
+# moveset for pawn (and is used for King check!)
+module PawnAtks
+  def left_atk
+    proc { |pos| atks(pos[0], pos[1])[0] }
+  end
+
+  def right_atk
+    proc { |pos| atks(pos[0], pos[1])[1] }
+  end
+
+  # unlessed !blocked
+  def atks(row, col)
+    [[@dir + row, col - 1], [@dir + row, col + 1]]
   end
 end

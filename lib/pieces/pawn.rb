@@ -2,6 +2,7 @@ require_relative 'piece'
 
 # Pawn
 class Pawn < Piece
+  include PawnAtks
   attr_accessor :sym, :dir, :color, :moved
 
   def initialize(color)
@@ -10,7 +11,8 @@ class Pawn < Piece
     @dir = color == 'white' ? -1 : 1
   end
 
-  def moves(bools, available_moves = [])
+  # this bools default is temporary
+  def moves(bools = [false, false, true, true], available_moves = [])
     # pp bools
     procs = [spacex1, spacex2, left_atk, right_atk].flatten
     bools.each_with_index do |bool, i|
@@ -43,12 +45,6 @@ class Pawn < Piece
   # unlessed !blocked
   def atks(row, col)
     [[@dir + row, col - 1], [@dir + row, col + 1]]
-  end
-
-  def blocked?(bools)
-    proc do |ahead1, ahead2|
-      [ahead1 != '', ahead2 != '']
-    end
   end
 end
 

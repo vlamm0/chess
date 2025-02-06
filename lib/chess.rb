@@ -5,6 +5,7 @@ require_relative 'data'
 
 # Chess
 class Chess
+  # include Directions
   ALPH = %w[A B C D E F G H].freeze
   GREEN = "\e[48;5;10m".freeze
   YELLOW = "\e[48;5;11m".freeze
@@ -53,59 +54,51 @@ class Chess
   # moves piece
   def move(curr, to)
     # the parameters for move will take player input, so these assignments will be unnecessary
-    curry, currx = curr
-    toy, tox = to
+    # curry, currx = curr
+    # toy, tox = to
     # swap
-    data[toy][tox] = data[curry][currx]
-    data[curry][currx] = nil
-    data[toy][tox].moved = true
+    data[to[0]][to[1]] = get_piece(curr) # data[curry][currx]
+    data[curr[0]][curr[1]] = nil
+    get_piece(to).moved = true
   end
 
   # shows available moves for selected piece
   def select(row, col, piece = data[row][col])
     puts "\n\n#{piece.class}"
-    possible_moves = handle_pieces(row, col, piece)
-    # piece.is_a?(Pawn) ? handle_pawn(row, col, piece) : handle_pieces(row, col, piece)
-    # possible_moves = handle_pieces(row, col, piece)
-    # pp possible_moves
+    possible_moves = get_moves(row, col, piece) # handle_pieces(row, col, piece)
     possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
     puts
+    # pp possible_moves
     chessboard(possible_moves, [row, col])
   end
 
-  def handle_pieces(row, col, piece) # dfs unless piece.is_a?(Pawn) &&
-    moves = if piece.is_a?(Pawn)
-              pp pawn_blocks(row, col, piece)
-              piece.moves(pawn_blocks(row, col, piece))
-              # filter if blocked, we need 4 tiles of data
-              # piece.moves.filter { |proc| proc.call([row, col], data).nil? }
-            else
-              piece.moves
-            end
-    moves.map { |proc| dfs([row, col], piece, proc) }.flatten(1)
+  # I can get moves here and pass it to handle_pieces. This way I can utilize the handle pieces method with the king's check moves but as a slider piece for dfs
+  def get_moves(row, col, piece)
+    moves = piece.is_a?(Pawn) ? piece.moves(pawn_blocks(row, col, piece)) : piece.moves
+    handle_pieces([row, col], piece, moves)
   end
 
-  def blocks_4_pawns(row, col, piece = data[row][col], forward = piece.dir)
-    [data[row + forward][col - 1], data[row + forward][col], data[row + forward + forward][col]]
+  def handle_pieces(pos, piece, moves)
+    moves.map { |proc| dfs(pos, piece, proc) }.flatten(1)
   end
 
   def pawn_blocks(row, col, piece, forward = row + piece.dir)
-    # forward = row + piece.dir?
     space = data[forward][col].nil?
-    blocks = [space, space && data[forward + piece.dir][col].nil?] # piece.blocked?.call(data[forward][col], data[forward + piece.dir][col])
-    # pp blocks
-    # pp(blocks + pawn_attacks(row, col, piece))
-    pp pawn_attacks(row, col, piece)
+    blocks = [space, space && data[forward + piece.dir][col].nil?]
     blocks + pawn_attacks(row, col, piece)
-    # piece.blocked?(blocks + pawn_attacks(row, col, piece))
   end
 
   def pawn_attacks(row, col, piece)
     piece.atks(row, col).map { |atk| !data[atk[0]][atk[1]].nil? }
   end
 
-  def alph_to_num(letter)
-    ALPH.index(letter.upcase!)
+  # translate alph to num and [] to piece
+  def translate(var)
+    ALPH.index(var.upcase!)
+  end
+
+  def get_piece(pos)
+    data[pos[0]][pos[1]]
   end
 
   def on_board?(move)
@@ -114,8 +107,7 @@ class Chess
     move[0].between?(0, 7) && move[1].between?(0, 7)
   end
 
-  # finds available moves for sliding pieces
-  # color is not needed and piece could be easier
+  # finds available moves for piece
   def dfs(pos, piece, proc, acc = [])
     # base
     pos = proc.call(pos) # next proc
@@ -124,11 +116,11 @@ class Chess
     curr = data[pos[0]][pos[1]] # need variable for abc
     return acc if same_team?(piece.color, curr)
 
-    acc.append(pos) # only sends back next pos when onboard and not on the same team
-    return acc if !curr.nil? || piece.is_a?(Gallop) || piece.is_a?(Pawn)
+    acc.append(pos) # only sends back next pos when on board and not on the same team
+    # return if piece is a king, pawn, or knight
+    return acc if !curr.nil? ||  piece.is_a?(King) || !piece.is_a?(Directions)
 
     # recurse
-    # pp 'made it?'
     dfs(pos, piece, proc, acc)
   end
 
@@ -138,48 +130,75 @@ class Chess
     color == piece.color
   end
 
+  # missing knight
+  def check?(pos)
+    piece = get_piece(pos)
+    color = piece.color
+    # atk_vector = get_moves(pos[0], pos[1], Queen.new(color), piece.moves) + piece.atks(pos[0], pos[1])
+    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
+    # pp atk_vector
+    atks_on_king?(atk_vector, color)
+  end
+
+  # need to test with multiple attackers
+  def atks_on_king?(atk_vector, color)
+    attacks = atk_vector.each_with_object([]) do |atk, accum|
+      # Reject logic - skip items where the condition is true
+      next atk if get_piece(atk).nil? || same_team?(color, get_piece(atk))
+
+      # Handle pieces and accumulate the result
+      accum.concat(get_moves(atk[0], atk[1], get_piece(atk)))
+      # accum.concat(handle_pieces(atk, get_piece(atk), get_piece(atk).moves))
+    end
+    !attacks.filter { |pos| get_piece(pos).is_a?(King) }.empty?
+  end
+
   # ***dev methods***
 
   # helper method to change data
   def change_data(piece_x, piece_y, move_x = nil, move_y = nil)
     piece = [piece_x, piece_y]
     y = piece.find { |axis| axis.is_a?(Integer) }
-    x = alph_to_num(piece.find { |axis| axis.is_a?(String) })
+    x = translate(piece.find { |axis| axis.is_a?(String) })
     move_x.nil? && move_y.nil? ? data[y][x] = nil : move([y, x], [move_y, move_x])
   end
 end
 
 game = Chess.new
 game.chessboard
-# game.move([6, 0], [2, 0])
 game.change_data('a', 1)
 game.change_data('h', 0)
 game.change_data('e', 6)
 game.change_data('g', 6)
-# game.select(0, 0)
 
 # bishop test
-# game.move([7, game.alph_to_num('f')], [5, 5])
-# game.select(5, 5)
+game.move([7, game.translate('f')], [5, 5])
+game.select(5, 5)
 
 # rook test
-# game.move([0, game.alph_to_num('a')], [5, 5])
-# game.select(5, 5)
+game.move([0, game.translate('a')], [5, 5])
+game.select(5, 5)
 
 # queen test
-game.move([0, game.alph_to_num('e')], [5, 5])
+game.move([0, game.translate('e')], [5, 5])
 game.select(5, 5)
 
 # pawn test
-game.move([6, game.alph_to_num('a')], [2, 1])
-game.move([1, game.alph_to_num('c')], [2, 2])
-game.move([6, game.alph_to_num('c')], [2, 0])
+game.move([1, game.translate('c')], [2, 2])
+game.move([6, game.translate('c')], [2, 0])
 game.select(1, 1)
 
 # knight test
-# game.select(7, 6)
+game.select(7, 6)
 # game.data[7][6].moves(7, 6)
 
 # king test
-# game.move([5, game.alph_to_num('f')], [6, game.alph_to_num('e')])
-# game.select(7, 4)
+game.move([5, game.translate('f')], [6, game.translate('e')])
+game.select(7, 4)
+
+pp game.check?([7, 4])
+puts
+puts
+game.move([7, game.translate('e')], [3, game.translate('d')])
+game.chessboard
+pp game.check?([3, 3])

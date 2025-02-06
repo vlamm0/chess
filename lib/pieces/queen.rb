@@ -7,7 +7,7 @@ class Queen < Piece
 
   def initialize(color)
     super
-    @sym = color == 'white' ? "\u2654" : "\u265A"
+    @sym = color == 'white' ? "\u2655" : "\u265B"
   end
 
   def moves
