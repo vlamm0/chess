@@ -20,7 +20,7 @@ class Chess
   end
 
   # draw the board
-  def chessboard(highlights = nil, selection = nil)
+  def board(highlights = nil, selection = nil)
     puts "\n   #{ALPH.join('  ')}"
     8.times do |row|
       print "#{row} "
@@ -62,7 +62,7 @@ class Chess
     possible_moves = get_moves(pos, piece)
     possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
     puts
-    chessboard(possible_moves, pos)
+    board(possible_moves, pos)
   end
 
   # NOTE: pawns need chess data to determine moveset
@@ -152,33 +152,33 @@ class Chess
   end
 end
 
-game = Chess.new
-game.chessboard
-game.change_data('a', 1)
-game.change_data('H', 0)
-game.change_data('e', 6)
-game.change_data('g', 6)
+# chess = Chess.new
+# chess.board
+# chess.change_data('a', 1)
+# chess.change_data('H', 0)
+# chess.change_data('e', 6)
+# chess.change_data('g', 6)
 
-# bishop test
-game.move([7, game.translate('f')], [5, 5])
-game.select([5, 5])
+# # bishop test
+# chess.move([7, chess.translate('f')], [5, 5])
+# chess.select([5, 5])
 
-# rook test
-game.move([0, game.translate('A')], [5, 5])
-game.select([5, 5])
+# # rook test
+# chess.move([0, chess.translate('A')], [5, 5])
+# chess.select([5, 5])
 
-# queen test
-game.move([0, game.translate('e')], [5, 5])
-game.select([5, 5])
+# # queen test
+# chess.move([0, chess.translate('e')], [5, 5])
+# chess.select([5, 5])
 
-# pawn test
-game.move([1, game.translate('c')], [2, 2])
-game.move([6, game.translate('c')], [2, 0])
-game.select([1, 1])
+# # pawn test
+# chess.move([1, chess.translate('c')], [2, 2])
+# chess.move([6, chess.translate('c')], [2, 0])
+# chess.select([1, 1])
 
-# knight test
-game.select([7, 6])
+# # knight test
+# chess.select([7, 6])
 
-# king test
-game.move([5, game.translate('f')], [6, game.translate('e')])
-game.select([7, 4])
+# # king test
+# chess.move([5, chess.translate('f')], [6, chess.translate('e')])
+# chess.select([7, 4])
