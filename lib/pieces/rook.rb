@@ -10,7 +10,6 @@ class Rook < Piece
     @sym = color == 'white' ? "\u2656" : "\u265C"
   end
 
-  # this is a list of procs to use with recursive testing on the board
   def moves
     [vert, hor].flatten
   end

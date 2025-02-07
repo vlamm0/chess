@@ -41,12 +41,6 @@ module Directions
   def directions
     [hor, vert, diag1, diag2].flatten!
   end
-
-  def sliding?(proc)
-    pp proc
-    pp directions
-    directions.any? { |dir| dir == proc }
-  end
 end
 
 # moveset for knight
@@ -60,15 +54,15 @@ end
 # moveset for pawn (and is used for King check!)
 module PawnAtks
   def left_atk
-    proc { |pos| atks(pos[0], pos[1])[0] }
+    proc { |pos| atks(pos)[0] }
   end
 
   def right_atk
-    proc { |pos| atks(pos[0], pos[1])[1] }
+    proc { |pos| atks(pos)[1] }
   end
 
   # unlessed !blocked
-  def atks(row, col)
+  def atks(pos, row = pos[0], col = pos[1])
     [[@dir + row, col - 1], [@dir + row, col + 1]]
   end
 end

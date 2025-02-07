@@ -23,5 +23,3 @@ class King < Piece
     atk_vector.filter { |move| on_board?(move) }
   end
 end
-
-pp King.new('white').attacks(7, 7)

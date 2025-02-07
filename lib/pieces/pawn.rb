@@ -11,49 +11,22 @@ class Pawn < Piece
     @dir = color == 'white' ? -1 : 1
   end
 
-  # this bools default is temporary
-  def moves(bools = [false, false, true, true], available_moves = [])
-    # pp bools
+  # NOTE: pawn needs board data to determine available moves (represented by blocks)
+  def moves(blocks, available_moves = [])
     procs = [spacex1, spacex2, left_atk, right_atk].flatten
-    bools.each_with_index do |bool, i|
-      available_moves.append(procs[i]) if bool
+    blocks.each_with_index do |block, i|
+      available_moves.append(procs[i]) if block
     end
     available_moves
-    # .reject { |proc, i| i == bools[i] }
   end
 
-  #
+  # move one space
   def spacex1
     proc { |pos| [@dir + pos[0], pos[1]] }
   end
 
+  # move two spaces
   def spacex2
-    proc { |pos|
-      # have to call prev
-      moved ? nil : [@dir + @dir + pos[0], pos[1]]
-    }
-  end
-
-  def left_atk
-    proc { |pos| atks(pos[0], pos[1])[0] }
-  end
-
-  def right_atk
-    proc { |pos| atks(pos[0], pos[1])[1] }
-  end
-
-  # unlessed !blocked
-  def atks(row, col)
-    [[@dir + row, col - 1], [@dir + row, col + 1]]
+    proc { |pos| moved ? nil : [@dir + @dir + pos[0], pos[1]] }
   end
 end
-
-# I believe this game method is unnecessary after refactoring, keeping here for safety
-# def handle_pawn(selection, row, col)
-#   empty = data[row][col] == ''
-#   return YELLOW if selection[1] == col
-
-#   empty ? bg_tile(row, col) : RED
-# end
-# called in hl_tile method instead of return YELLOW
-# # return handle_pawn(selection, row, col) if selected_piece.is_a?(Pawn)
