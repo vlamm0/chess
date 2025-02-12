@@ -21,7 +21,7 @@ class Chess
 
   # draw the board
   def board(highlights = nil, selection = nil)
-    puts "\n   #{ALPH.join('  ')}"
+    puts "\n\n   #{ALPH.join('  ')}"
     8.times do |row|
       print "#{row} "
       8.times { |col| print draw_tile(row, col, highlights, selection) }
@@ -56,13 +56,13 @@ class Chess
     get_piece(to).moved = true
   end
 
-  # highlight available moves for selected piece
+  # highlight (and return) available moves for selected piece
   def select(pos, piece = data[pos[0]][pos[1]])
     puts "\n\n#{piece.class}"
     possible_moves = get_moves(pos, piece)
     possible_moves.each { |move| print "#{ALPH[move[1]]}#{move[0]} " }
-    puts
     board(possible_moves, pos)
+    possible_moves
   end
 
   # NOTE: pawns need chess data to determine moveset

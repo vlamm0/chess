@@ -9,15 +9,26 @@ class Player
     self.color = self.class.instance_variable_get(:@num_player) == 1 ? 'white' : 'black'
   end
 
+  def opponent
+    color == 'white' ? 'black' : 'white'
+  end
+
   def prompt(explain = nil)
-    puts '***Only put 1 letter and 1 number representing your piece***' if explain
-    puts "Select a piece to move #{color}:"
-    input = gets.chomp.split('')
+    puts '***Only put 1 letter and 1 number representing the piece***' if explain
+    puts "Select your piece to move #{color}:" if explain.nil?
+    validate_input(gets.chomp.split(''))
+    # standardize(input)
+    # pos = input.length == 2 ? standardize(input) : prompt(true)
+    # pos.nil? ? prompt(true) : pos
+  end
+
+  def validate_input(input)
     pos = input.length == 2 ? standardize(input) : prompt(true)
     pos.nil? ? prompt(true) : pos
   end
 
   def standardize(pos, num = -1)
+    # puts 'moving through stand'
     pos.each { |elem| num = pos.delete(elem).to_i if elem.match?(/^\d+$/) }
     # tmp for testing
     # puts "letter: #{pos[0]} num: #{num}"
@@ -26,3 +37,5 @@ class Player
     num != -1 && pos.length == 1 ? [num, ALPH.index(pos[0].upcase)] : nil
   end
 end
+
+# pp Player.new.prompt
