@@ -34,7 +34,6 @@ class Game
     # game.board
     false
     # @turn += 1 unless checkmate
-    # breaks infinite loop, temp.
   end
 
   def move

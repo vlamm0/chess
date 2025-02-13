@@ -12,11 +12,12 @@ class Chess
   RED = "\e[48;5;9m".freeze
   WHITE = "\e[48;5;255m".freeze
   GRAY = "\e[48;5;244m".freeze
-  attr_accessor :data
+  attr_accessor :data, :checks
 
   # uses the required data file for state, start or saved (to be implemented!)
   def initialize
     @data = MyData.board
+    @checks = {}
   end
 
   # draw the board
@@ -126,21 +127,23 @@ class Chess
   def check?(pos)
     piece = get_piece(pos)
     color = piece.color
-    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) # + piece.attacks(pos[0], pos[1])
+    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
     atks_on_king?(atk_vector, color)
   end
 
   def atks_on_king?(atk_vector, color)
-    attacks = atk_vector.each_with_object([]) do |atk, accum|
-      # Reject logic - skip items where the condition is true
-      next atk if get_piece(atk).nil? || same_team?(color, get_piece(atk))
+    atk_vector.each do |atk|
+      piece = get_piece(atk)
+      next atk if piece.nil? || same_team?(color, piece)
 
-      puts "attacker: #{atk} \nmoves: #{get_moves(atk, get_piece(atk))}"
-      # Handle pieces and accumulate the result
-      accum.concat(get_moves(atk, get_piece(atk)))
+      moves = piece.is_a?(Pawn) ? piece.atks(atk) : get_moves(atk, piece)
+      next atk if moves.filter { |pos| get_piece(pos).is_a?(King) }.empty?
+
+      checks[atk] = moves
     end
-    pp attacks
-    !attacks.filter { |pos| get_piece(pos).is_a?(King) }.empty?
+    # tmp display hash
+    pp checks
+    !checks.empty?
   end
 
   # ***dev methods***
