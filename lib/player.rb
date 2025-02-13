@@ -2,11 +2,12 @@
 class Player
   ALPH = %w[A B C D E F G H].freeze
   @num_player = 0
-  attr_accessor :color, :num_player
+  attr_accessor :color, :num_player, :king
 
   def initialize
     self.class.instance_variable_set(:@num_player, self.class.instance_variable_get(:@num_player) + 1)
-    self.color = self.class.instance_variable_get(:@num_player) == 1 ? 'white' : 'black'
+    @color = self.class.instance_variable_get(:@num_player) == 1 ? 'white' : 'black'
+    @king = color == 'white' ? [7, 4] : [0, 4]
   end
 
   def opponent

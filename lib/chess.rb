@@ -126,7 +126,7 @@ class Chess
   def check?(pos)
     piece = get_piece(pos)
     color = piece.color
-    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
+    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) # + piece.attacks(pos[0], pos[1])
     atks_on_king?(atk_vector, color)
   end
 
@@ -135,9 +135,11 @@ class Chess
       # Reject logic - skip items where the condition is true
       next atk if get_piece(atk).nil? || same_team?(color, get_piece(atk))
 
+      puts "attacker: #{atk} \nmoves: #{get_moves(atk, get_piece(atk))}"
       # Handle pieces and accumulate the result
       accum.concat(get_moves(atk, get_piece(atk)))
     end
+    pp attacks
     !attacks.filter { |pos| get_piece(pos).is_a?(King) }.empty?
   end
 
