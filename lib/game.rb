@@ -4,7 +4,7 @@ require_relative './player'
 
 # game
 class Game
-  attr_accessor :players, :game, :turn
+  attr_accessor :players, :game, :turn, :check
 
   def initialize
     @players = [Player.new, Player.new]
@@ -18,7 +18,7 @@ class Game
       # prevent infinite loop while testing
       break if turn > 100
 
-      move
+      game.checks ? defend : move
       # curr, to = select
       # game.move(curr, to)
       # whos_turn.king = to if game.get_piece(curr).is_a?(King)
@@ -28,9 +28,37 @@ class Game
     puts "\n#{color} wins!\n"
   end
 
+  def escape?(king)
+    stack = []
+    # piece = game.get_piece(king)
+    possible_moves = game.get_moves(king, game.get_piece(king))
+    possible_moves.each do |to|
+      stack.push(game.get_piece(to))
+      game.move(king, to)
+      check = game.check?(to)
+      game.move(to, king)
+      game.data[to[0]][to[1]] = stack.pop
+      return true unless check
+    end
+    false
+  end
+
   def checkmate?(king = whos_turn.king)
     # change to checkmate? function
-    pp game.check?(king)
+
+    return false unless game.check?(king) # is king in check (if so also stores attacks in game.check)
+
+    existing_checks = game.checks
+    pp existing_checks
+
+    pp escape?(king)
+
+    # shied function : can a piece move to all of the
+    # I need k/v pairs
+    # !escape && !shield ? return true : game.check = existing_checks
+    game.checks = existing_checks
+    pp game.checks
+
     # game.board
     false
     # @turn += 1 unless checkmate

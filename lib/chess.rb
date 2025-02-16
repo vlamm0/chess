@@ -17,7 +17,7 @@ class Chess
   # uses the required data file for state, start or saved (to be implemented!)
   def initialize
     @data = MyData.board
-    @checks = {}
+    @checks = []
   end
 
   # draw the board
@@ -125,6 +125,7 @@ class Chess
   end
 
   def check?(pos)
+    checks.clear
     piece = get_piece(pos)
     color = piece.color
     atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
@@ -139,10 +140,10 @@ class Chess
       moves = piece.is_a?(Pawn) ? piece.atks(atk) : get_moves(atk, piece)
       next atk if moves.filter { |pos| get_piece(pos).is_a?(King) }.empty?
 
-      checks[atk] = moves
+      @checks = moves.append(atk)
     end
     # tmp display hash
-    pp checks
+    # pp checks
     !checks.empty?
   end
 
