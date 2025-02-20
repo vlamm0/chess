@@ -67,7 +67,7 @@ class Chess
   end
 
   # NOTE: pawns need chess data to determine moveset
-  def get_moves(pos, piece)
+  def get_moves(pos, piece = get_piece(pos))
     moves = piece.is_a?(Pawn) ? piece.moves(pawn_blocks(pos, piece) + pawn_attacks(pos, piece)) : piece.moves
     handle_pieces(pos, piece, moves)
   end
@@ -107,7 +107,7 @@ class Chess
     pos = proc.call(pos) # next proc
     return acc unless on_board?(pos)
 
-    curr = data[pos[0]][pos[1]] # need variable for abc
+    curr = get_piece(pos) # data[pos[0]][pos[1]] # get_piece
     return acc if same_team?(piece.color, curr)
 
     acc.append(pos) # only sends back next pos when on board and not on the same team
@@ -124,38 +124,77 @@ class Chess
     color == piece.color
   end
 
-  def check?(pos)
-    checks.clear
-    piece = get_piece(pos)
-    color = piece.color
-    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
-    atks_on_king?(atk_vector, color)
+  def check_for_blocks(pos, color)
+    # pp pos
+    king = King.new(color)
+    # pp "block_vector: #{block_vector}"
+    # print "check for blocks on #{pos}: "
+    block_vector = handle_pieces(pos, Queen.new(color), king.moves) + king.attacks(pos[0], pos[1])
+
+    block_vector =
+      block_vector.filter do |block|
+        !get_piece(block).nil? && !same_team?(color, get_piece(block)) && !get_piece(block).is_a?(King) && get_moves(block).any?(pos) # && !get_piece(block).is_a?(King) }
+      end
+    # .filter { |block| !get_piece(block).is_a?(King) }
+    # .filter { |blocker| get_moves(blocker).any?(pos) }
+    block_vector.map { |blocker| [blocker, pos] }.uniq
+
+    # block_vector.filter! do |block|
+    #   !get_piece(block).nil? && !same_team?(color, get_piece(block)) && !get_piece(block).is_a?(King)
+    # end
+    # block_vector.filter! { |blocker| get_moves(blocker).any?(pos) }
+    # # pp "bl v: #{block_vector}"
+    # block_vector.map! { |blocker| [blocker, pos] }
+    # # pp "bl v: #{block_vector}"
+    # block_vector.uniq
+
+    # check if this filtered block list can attack the said space &&
   end
 
-  def atks_on_king?(atk_vector, color)
-    atk_vector.each do |atk|
+  # we need to pass in piececolor
+  def check?(pos, color)
+    # @checks.clear
+    piece = get_piece(pos)
+    # pp pos
+    atk_vector = handle_pieces(pos, Queen.new(color), piece.moves) + piece.attacks(pos[0], pos[1])
+    # print 'attackers: '
+    attackers = atk_vector.filter { |atk| !get_piece(atk).nil? && !same_team?(color, get_piece(atk)) }
+
+    # pp "#{attackers} attackers" # these are possible attackers, pass this into atks on king method
+    atks_on_king?(attackers, pos)
+  end
+
+  # make sure this works with multple attackers
+  def atks_on_king?(attackers, king)
+    @checks.clear
+    attackers.each do |atk|
       piece = get_piece(atk)
-      next atk if piece.nil? || same_team?(color, piece)
 
-      moves = piece.is_a?(Pawn) ? piece.atks(atk) : get_moves(atk, piece)
-      next atk if moves.filter { |pos| get_piece(pos).is_a?(King) }.empty?
+      moves = piece.is_a?(Pawn) ? piece.moves([false, false, true, true]) : piece.moves # get_moves(atk, piece)
 
-      @checks = moves.append(atk)
+      attack_vector = moves.map { |proc| dfs(atk, piece, proc) }.filter do |stream|
+        # pp 'stream/king:'
+        # pp stream
+        # pp king
+        stream.any?(king)
+      end.flatten(1)
+
+      @checks.append(attack_vector.append(atk)) unless attack_vector.empty?
     end
     # tmp display hash
-    # pp checks
-    !checks.empty?
+    # pp " checks: #{checks}"
+    !@checks.empty?
   end
 
   # ***dev methods***
 
   # helper method to change data
-  def change_data(piece_x, piece_y, move_x = nil, move_y = nil)
-    piece = [piece_x, piece_y]
-    y = piece.find { |axis| axis.is_a?(Integer) }
-    x = translate(piece.find { |axis| axis.is_a?(String) })
-    move_x.nil? && move_y.nil? ? data[y][x] = nil : move([y, x], [move_y, move_x])
-  end
+  # def change_data(piece_x, piece_y, move_x = nil, move_y = nil)
+  #   piece = [piece_x, piece_y]
+  #   y = piece.find { |axis| axis.is_a?(Integer) }
+  #   x = translate(piece.find { |axis| axis.is_a?(String) })
+  #   move_x.nil? && move_y.nil? ? data[y][x] = nil : move([y, x], [move_y, move_x])
+  # end
 end
 
 # chess = Chess.new
